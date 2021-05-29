@@ -1,9 +1,12 @@
 #include <iostream>
+#include <limits>
 #define MAX 100
 
 using namespace std;
 
+void inicioEntrada();
 void receberEntrada();
+void validarEntrada(int *);
 void printTabuleiro(int [][MAX]);
 void finalizarCod(int, int, int, int [][MAX]);                       /* Funções a serem utilizadas */
 void validezTour(int, int, int, int, int [][MAX]);                      /* no programa */
@@ -15,8 +18,43 @@ void contarMovsDois(int [][MAX], int, int, int, int, int *);
 typedef struct posicao {    int x;  int y;  } pos;  // Posição linha e coluna inicial do cavalo.
 
 int main(void) {
-    receberEntrada();
+    cout << endl << "Passeio do Cavalo - (Regra de Warnsdorff) \n" << endl;
+    inicioEntrada();
     return 0;
+}
+
+void validarEntrada(int *x) {
+    for (;;) {
+        if (cin >> *x) {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            break;
+        } else {
+            cout << "Por favor, digite um numero inteiro valido: ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
+
+void inicioEntrada() {
+    int escolhaEntrada;
+    cout << "1. Fazer um novo passeio" << endl;
+    cout << "2. Encerrar o programa" << endl;
+    cout << "> ";
+    validarEntrada(&escolhaEntrada);
+    switch(escolhaEntrada) {
+        case 1:
+            receberEntrada();
+            break;
+        case 2:
+            cout << endl << "Obrigado por usar o nosso programa!" << endl;
+            exit(0);
+            break;
+        default:
+            cout << endl << "Opcao invalida! Tente novamente." << endl;
+            break;
+    }
+    inicioEntrada();
 }
 
 void receberEntrada() {
@@ -28,18 +66,18 @@ void receberEntrada() {
     pos c_pos;
 
     cout << "Quantidade de linhas do tabuleiro: ";
-    cin >> linhas;
+    validarEntrada(&linhas);
     cout << "Quantidade de colunas do tabuleiro: ";
-    cin >> colunas;
+    validarEntrada(&colunas);
 
     cout << "Linha em que o cavalo iniciara: ";
-    cin >> c_pos.x;
+    validarEntrada(&c_pos.x);
     cout << "Coluna em que o cavalo iniciara: ";
-    cin >> c_pos.y;
+    validarEntrada(&c_pos.y);
 
     /* Verificar se o tour poderá ser feito, e se sim, iniciar o tour. */
     validezTour(linhas, colunas, c_pos.x, c_pos.y, tabuleiro);
-    iniciarTour(linhas, colunas, c_pos.x, c_pos.y, tabuleiro);
+    iniciarTour(linhas, colunas, c_pos.x - 1, c_pos.y - 1, tabuleiro);
 }
 
 void iniciarTour(int l, int c, int l_cavalo, int c_cavalo, int tabuleiro[][MAX]) {
@@ -74,7 +112,7 @@ void iniciarTour(int l, int c, int l_cavalo, int c_cavalo, int tabuleiro[][MAX])
                 l_cavalo += 2;  c_cavalo += 1;
                 break;
             default:
-                finalizarCod(6, l, c, tabuleiro);    /* Se a posição atual não tiver nenhuma posição adjacente disponível, um erro */
+                finalizarCod(7, l, c, tabuleiro);    /* Se a posição atual não tiver nenhuma posição adjacente disponível, um erro */
                 break;                                          /* será mostrado (não há posições para ir) */
         }
     }
@@ -176,17 +214,17 @@ void validezTour(int l, int c, int x, int y, int tabuleiro[][MAX]) {
     if(l > MAX || c > MAX) {    // L ou C superando o máximo.
         finalizarCod(3, l, c, tabuleiro);
     }
-    if(x < 0 || y < 0) {        // O cavalo iniciando em uma posição fora do tabuleiro.
-        finalizarCod(4, l, c, tabuleiro);
-    }
-    if(x > l || y > c) {        // O cavalo iniciando em uma posição fora do tabuleiro.
+    if(x < 0 || y < 0 || x > l || y > c) {  // Cavalo iniciando em uma posição fora do tabuleiro.
         finalizarCod(4, l, c, tabuleiro);
     }
     if(l <= 0 || c <= 0) {        // L ou C tendo um valor nulo ou negativo.
         finalizarCod(5, l, c, tabuleiro);
     }
+    if(x == 0 || y == 0) {        // Cavalo iniciando em uma posição fora do tabuleiro. (Caso especial de 0, 0)
+        finalizarCod(6, l, c, tabuleiro);
+    }
 
-    cout << "\n" << "Cavalo iniciando em (" << x << ", " << y << ")" << "\n\n";
+    cout << endl << "Cavalo iniciando em " << "(" << x << ", " << y << ")" << "\n" <<  endl;
 
     return;
 }
@@ -203,17 +241,17 @@ void printTabuleiro(int tabuleiro[][MAX]) {     /* Exibir o tabuleiro inteiro */
                 cout << tabuleiro[p][m] << " | ";
             }
         }
-        cout << "\n";
+        cout << endl;
     }
-    cout << "\n";
+    cout << endl;
 }
 
 void semEspacosDisponiveis(int l, int c, int tabuleiro[][MAX]) {    /* Verificar se não há espaços disponíveis para o cavalo ir */
     for(int i = 0; i < l; i++) {
         for(int k = 0; k < c; k++) {
             if(tabuleiro[i][k] == 0) {
-                cout << "\n" << "Erro 3: Nao ha espacos validos para o cavalo ir." << "\n";
-                exit(3);
+                cout << endl << "Erro 3: Nao ha espacos validos para o cavalo ir." << endl;
+                inicioEntrada();
             }
         }
     }
@@ -222,29 +260,31 @@ void semEspacosDisponiveis(int l, int c, int tabuleiro[][MAX]) {    /* Verificar
 void finalizarCod(int codFim, int l, int c, int tabuleiro[][MAX]) { /* Encerrar o programa */
     switch(codFim) {
         case 1:
-            cout << "\n" << "Erro 1: A quantidade de linhas e colunas são impares, nao eh possível fazer o tour do cavalo." << "\n";
+            cout << endl << "Erro 1: A quantidade de linhas e colunas são impares, nao eh possível fazer o tour do cavalo." << endl;
             break;
         case 2:
-            cout << "\n" << "Erro 2: O tour do cavalo nao eh possivel sob essas condicoes. Tente outros valores." << "\n";
+            cout << endl << "Erro 2: O tour do cavalo nao eh possivel sob essas condicoes. Tente outros valores." << endl;
             break;
         case 3:
-            cout << "Erro 3: Tabuleiro superou o limite ([100][100]). Tente com numeros menores!\n";
+            cout << endl << "Erro 3: Tabuleiro superou o limite ([100][100]). Tente com numeros menores!" << endl;
             break;
         case 4:
-            cout << "Erro 4: Posicao inicial esta fora do tabuleiro.\n";
+            cout << endl << "Erro 4: Posicao inicial esta fora do tabuleiro." << endl;
             break;
         case 5:
-            cout << "Erro 5: O tabuleiro tem algum valor nulo ou negativo.\n";
+            cout << endl << "Erro 5: O tabuleiro tem algum valor nulo ou negativo." << endl;
             break;
         case 6:
+            cout << endl << "Erro 6: Posicao inicial esta fora do tabuleiro. (0, 0)" << endl << "Nao quis dizer (1, 1)?" << endl;
+            break;
+        case 7:
             semEspacosDisponiveis(l, c, tabuleiro);    // Se não houverem espaços disponíveis, dar o erro 3 e encerrar.
-            cout << "Caminho do cavalo:\n\n";   // Caso contrário, mostrar o caminho final do cavalo e encerrar o programa.
+            cout << "Caminho do cavalo: \n" << endl;   // Caso contrário, mostrar o caminho final do cavalo e encerrar o programa.
             printTabuleiro(tabuleiro);
-            exit(0);
             break;
         default:
-            cout << "\n" << "Erro inesperado!" << "\n";
+            cout << endl << "Erro inesperado!" << endl;
             break;
     }
-    exit(codFim);
+    inicioEntrada();
 }
